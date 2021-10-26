@@ -1,0 +1,52 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import './DevToken.sol'; 
+
+contract DevTokenSale {
+    
+    // address of admin
+    address payable public admin;
+    // define the instance of DevTokenSale
+    DevToken public devtoken;
+    // token price variable
+    uint256 public tokenprice;
+    // count of token sold variable
+    uint256 public totalsold;
+    
+    // sell event
+    event Sell(address sender, uint256 totalvalue);
+    
+    // constructor
+    constructor(address _tokenaddress, uint256 _tokenvalue) public {
+        admin = payable(msg.sender);
+        tokenprice = _tokenvalue;
+        devtoken = DevToken(_tokenaddress);
+    }
+    
+    // buyTokens function 
+    function buyTokens(uint256 _totalvalue) public payable{
+    // check if the contract has the tokens or not
+    require(devtoken.balanceOf(address(this)) >= _totalvalue, 'the smart contract dont hold the enough balance');
+    // check if the amount filled by the user is accurate
+    require(msg.value == _totalvalue * tokenprice, 'You are not able to send enough ether');
+    // transfer the token to the user
+    devtoken.transfer(msg.sender, _totalvalue);
+    // increase the token sold
+    totalsold += _totalvalue;
+    // emit sell event for ui 
+    emit Sell(msg.sender, _totalvalue);
+        
+    }
+    
+    // end sale
+    function endsale() public {
+    // check if the admin has clicked the function or not 
+    require(msg.sender == admin, 'you are not the admin');
+    // transfer all the remaning tokens to the admin
+    devtoken.transfer(msg.sender, devtoken.balanceOf(address(this)));
+    // transfer all the ethereums to admin and selfdestrict the contract
+    selfdestruct(admin);
+    }
+    
+}
